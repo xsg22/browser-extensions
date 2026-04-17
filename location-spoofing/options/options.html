@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <title>位置模拟器 高级配置</title>
+    <link rel="stylesheet" href="options.css">
+</head>
+
+<body>
+    <div class="container">
+        <header class="app-header">
+            <div class="app-logo">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="2" y1="12" x2="22" y2="12"></line>
+                    <path
+                        d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z">
+                    </path>
+                </svg>
+            </div>
+            <div class="app-title">
+                <h1>位置模拟器配置</h1>
+                <p>管理您的国家节点预设，构建属于您业务的高级环境库。</p>
+            </div>
+        </header>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="card-header-top">
+                    <h2>可用节点列表</h2>
+                </div>
+            </div>
+
+            <div class="toolbar">
+                <div class="toolbar-left">
+                    <button id="open-add-modal-btn" class="btn primary">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 5v14"></path>
+                            <path d="M5 12h14"></path>
+                        </svg>
+                        添加节点
+                    </button>
+                    <button id="open-import-modal-btn" class="btn default">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        批量导入
+                    </button>
+                    <button id="export-btn" class="btn default">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        导出配置
+                    </button>
+                    <button id="toggle-batch-mode-btn" class="btn default">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+                            <polyline points="16 6 12 2 8 6"></polyline>
+                            <line x1="12" y1="2" x2="12" y2="15"></line>
+                        </svg>
+                        批量管理
+                    </button>
+                    <button id="reset-btn" class="btn danger outline">
+                        清空列表
+                    </button>
+                    <label id="select-all-wrapper"
+                        style="display: none; cursor: pointer; align-items: center; gap: 8px; font-size: 0.9rem; color: var(--text-main); font-weight: 500;">
+                        <input type="checkbox" id="select-all-cb" class="custom-checkbox danger-cb"> 全选
+                    </label>
+                    <button id="execute-batch-delete-btn" class="btn danger" style="display: none;">
+                        删除选中
+                    </button>
+                </div>
+                <div class="toolbar-right">
+                    <input type="text" id="search-nodes" class="search-input" placeholder="搜索名称或代码...">
+                </div>
+            </div>
+
+            <div id="nodes-list" class="list-container">
+                <!-- Data pops here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Import Modal -->
+    <div id="import-modal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <h3>批量导入节点</h3>
+            <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom: 12px; margin-top:-16px;">通过 JSON
+                格式导入新的节点（追加或合并）。</p>
+            <textarea id="import-area" style="height: 180px; font-size:0.85rem;" placeholder='[
+  {
+    "code": "US",
+    "name": "安克雷奇节点",
+    "region": "Anchorage",
+    "ip": "50.18.142.77",
+    "userAgent": "Mozilla/"
+  }
+]'></textarea>
+            <div id="import-msg" class="msg"></div>
+            <div class="modal-actions" style="margin-top: 16px;">
+                <button id="import-btn" class="btn primary">确认导入</button>
+                <button id="close-import-modal-btn" class="btn default">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit/Add Modal -->
+    <div id="edit-modal" class="modal">
+        <div class="modal-content">
+            <h3 id="edit-modal-title">编辑节点信息</h3>
+            <div class="form-group">
+                <label>国家代码 (Code / 必填)</label>
+                <input type="text" id="edit-code" placeholder="如 US, GB 等">
+            </div>
+            <div class="form-group">
+                <label>呈现名称 (Name)</label>
+                <input type="text" id="edit-name">
+            </div>
+            <div class="form-group">
+                <label>辅助地区 (Region)</label>
+                <input type="text" id="edit-region" placeholder="如 California 等（选填）">
+            </div>
+            <div class="form-group">
+                <label>目标 IP (多IP用逗号隔开 / 选填)</label>
+                <input type="text" id="edit-ip" placeholder="留空则不伪装IP">
+            </div>
+            <div class="form-group">
+                <label>目标时区 (手动键入或从列表选择 / 选填)</label>
+                <input type="text" id="edit-timezone" list="timezone-list" placeholder="如 America/New_York (留空自动推导)">
+                <datalist id="timezone-list"></datalist>
+            </div>
+            <div class="form-group">
+                <label>覆写 User-Agent (选填)</label>
+                <input type="text" id="edit-ua" placeholder="如需模拟特定设备请填入">
+            </div>
+            <div class="modal-actions">
+                <button id="save-edit-btn" class="btn primary">保存更改</button>
+                <button id="close-modal-btn" class="btn default">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Modal -->
+    <div id="confirm-modal" class="modal">
+        <div class="modal-content">
+            <h3 id="confirm-title" style="color: var(--danger);">确认操作</h3>
+            <p id="confirm-msg" style="color: var(--text-muted); margin-bottom: 24px; line-height: 1.6;">您确定要执行该操作吗？</p>
+            <div class="modal-actions">
+                <button id="confirm-yes-btn" class="btn danger">确定执行</button>
+                <button id="confirm-no-btn" class="btn default">暂不</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../shared/countries.js"></script>
+    <script src="../shared/timezone_map.js"></script>
+    <script src="options.js"></script>
+</body>
+
+</html>

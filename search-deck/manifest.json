@@ -1,0 +1,43 @@
+{
+  "manifest_version": 3,
+  "name": "SearchDeck Shortcut Search",
+  "version": "1.0",
+  "description": "Open a keyboard-friendly shortcut search palette for bookmarks, history, tabs, and web results.",
+  "permissions": [
+    "bookmarks",
+    "storage",
+    "favicon",
+    "history",
+    "tabs",
+    "scripting",
+    "activeTab"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "commands": {
+    "toggle-palette": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+F",
+        "mac": "Command+Shift+F"
+      },
+      "description": "Open the SearchDeck shortcut search palette"
+    }
+  },
+  "action": {
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    },
+    "default_title": "SearchDeck Shortcut Search"
+  }
+}
