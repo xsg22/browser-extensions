@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Browser Location Spoofing",
+  "name": "Location Spoofing",
   "version": "1.0.0",
   "description": "Simulate different country IP and Timezone easily for testing.",
   "icons": {
@@ -35,7 +35,7 @@
   ],
   "action": {
     "default_popup": "popup/popup.html",
-    "default_title": "Browser Location Spoofing"
+    "default_title": "Location Spoofing"
   },
   "options_ui": {
     "page": "options/options.html",

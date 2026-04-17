@@ -1,4 +1,4 @@
-# Browser Location Spoofing
+# Location Spoofing
 
 > 一款专为开发者和测试工程师打造的 Chrome 扩展，用于模拟地理位置、时区和 IP 地址，方便对地区限定功能进行测试与验证。
 
@@ -49,7 +49,7 @@
 ## 🗂 项目结构
 
 ```
-browser-location-spoofing/
+location-spoofing/
 ├── manifest.json                        # Manifest V3 配置
 ├── background.js                        # Service Worker — 请求头规则管理
 ├── content.js                           # 内容脚本 — 覆写页面内时区 API

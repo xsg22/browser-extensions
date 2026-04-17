@@ -1,4 +1,4 @@
-# Browser Location Spoofing
+# Location Spoofing
 
 > A Chrome Extension for simulating geographic locations, timezones, and IP addresses — purpose-built for developers and QA engineers who test region-specific behavior.
 
@@ -49,7 +49,7 @@
 ## 🗂 Project Structure
 
 ```
-browser-location-spoofing/
+location-spoofing/
 ├── manifest.json          # Manifest V3 config
 ├── background.js          # Service worker — declarativeNetRequest rule manager
 ├── content.js             # Content script — overrides Intl/Date timezone in page JS
