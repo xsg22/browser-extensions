@@ -17,6 +17,11 @@
         <h1>位置模拟器</h1>
       </div>
       <div class="header-actions" style="display: flex; gap: 10px; align-items: center;">
+        <svg id="quick-add-btn"
+          style="cursor: pointer; width: 22px; height: 22px; color: var(--text-muted); transition: color 0.2s;"
+          fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" title="快捷添加节点">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+        </svg>
         <svg id="settings-btn"
           style="cursor: pointer; width: 22px; height: 22px; color: var(--text-muted); transition: color 0.2s;"
           fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -34,6 +39,21 @@
     </div>
 
     <div class="main-content">
+      <div id="quick-add-panel"
+        style="display: none; background: rgba(255, 255, 255, 0.85); border: 1px solid var(--border-color); border-radius: 12px; padding: 12px; margin-bottom: 16px; box-shadow: var(--shadow-sm); backdrop-filter: blur(16px);">
+        <div style="font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; color: var(--text-main);">快捷新增节点</div>
+        <input type="text" id="quick-add-code" placeholder="输入国家代码 (如 US, GB...)"
+          style="width: 100%; box-sizing: border-box; border: 1px solid rgba(0,0,0,0.1); padding: 6px 10px; border-radius: 6px; margin-bottom: 8px; font-size: 0.85rem; outline: none; transition: border-color 0.2s;">
+        <input type="text" id="quick-add-ip" placeholder="输入目标 IP (选填)"
+          style="width: 100%; box-sizing: border-box; border: 1px solid rgba(0,0,0,0.1); padding: 6px 10px; border-radius: 6px; margin-bottom: 8px; font-size: 0.85rem; outline: none;">
+        <div style="display: flex; gap: 8px;">
+          <button id="quick-add-submit"
+            style="flex: 1; background: var(--primary); color: white; border: none; padding: 6px; border-radius: 6px; font-size: 0.85rem; cursor: pointer; font-weight: 500; transition: background 0.2s;">添加并选择</button>
+          <button id="quick-add-cancel"
+            style="flex: 1; background: rgba(0,0,0,0.05); color: var(--text-main); border: none; padding: 6px; border-radius: 6px; font-size: 0.85rem; cursor: pointer; font-weight: 500; transition: background 0.2s;">取消</button>
+        </div>
+      </div>
+
       <label id="main-node-label"
         style="display: flex; align-items: center; transition: all 0.3s ease;">选择目标国家/地区</label>
       <div class="custom-dropdown" id="custom-dropdown">
@@ -71,6 +91,7 @@
   </div>
 
   <script src="../shared/countries.js"></script>
+  <script src="../shared/timezone_map.js"></script>
   <script src="popup.js"></script>
 </body>
 

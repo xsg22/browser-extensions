@@ -14,9 +14,96 @@ document.addEventListener('DOMContentLoaded', async () => {
     const dropdownArrow = document.getElementById('dropdown-arrow');
     const mainNodeLabel = document.getElementById('main-node-label');
 
+    const quickAddBtn = document.getElementById('quick-add-btn');
+    const quickAddPanel = document.getElementById('quick-add-panel');
+    const quickAddSubmit = document.getElementById('quick-add-submit');
+    const quickAddCancel = document.getElementById('quick-add-cancel');
+    const quickAddCode = document.getElementById('quick-add-code');
+    const quickAddIp = document.getElementById('quick-add-ip');
+
     if (settingsBtn) {
         settingsBtn.addEventListener('click', () => {
             chrome.runtime.openOptionsPage();
+        });
+    }
+
+    if (quickAddBtn) {
+        quickAddBtn.addEventListener('click', () => {
+            if (quickAddPanel.style.display === 'block') {
+                quickAddPanel.style.display = 'none';
+            } else {
+                quickAddPanel.style.display = 'block';
+                quickAddCode.focus();
+                closeDropdown();
+            }
+        });
+    }
+
+    if (quickAddCancel) {
+        quickAddCancel.addEventListener('click', () => {
+            quickAddPanel.style.display = 'none';
+        });
+    }
+
+    if (quickAddSubmit) {
+        quickAddSubmit.addEventListener('click', async () => {
+            const code = quickAddCode.value.trim().toUpperCase();
+            const ipVal = quickAddIp.value.trim();
+
+            if (!code) {
+                quickAddCode.style.borderColor = 'var(--danger, red)';
+                setTimeout(() => quickAddCode.style.borderColor = 'rgba(0,0,0,0.1)', 800);
+                return;
+            }
+
+            let ipArray = ipVal ? ipVal.split(',').map(s => s.trim()).filter(Boolean) : [];
+
+            let name = code;
+            if (window.COUNTRIES) {
+                const defaultC = window.COUNTRIES.find(c => c.code === code);
+                if (defaultC) name = defaultC.name;
+            }
+
+            let tz = 'UTC';
+            if (window.inferTimezone) {
+                tz = window.inferTimezone(code, '') || 'UTC';
+            }
+
+            let newId = code + '_quick_' + Math.random().toString(36).substr(2, 4);
+            const newNode = {
+                id: newId,
+                code: code,
+                name: name,
+                ip: ipArray,
+                timezone: tz
+            };
+
+            const res = await chrome.storage.local.get(['visibleCountryCodes', 'allCountries']);
+            let updatedAll = res.allCountries || window.COUNTRIES || [];
+            updatedAll.unshift(newNode);
+
+            let vIds = res.visibleCountryCodes || updatedAll.map(c => c.id);
+            if (!vIds.includes(newId)) vIds.push(newId);
+
+            await chrome.storage.local.set({
+                allCountries: updatedAll,
+                visibleCountryCodes: vIds,
+                activeCountry: newId,
+                activeIp: ipArray.length > 0 ? ipArray[0] : ''
+            });
+
+            // Update local state
+            allCountries = updatedAll;
+            displayableCountries = allCountries.filter(c => vIds.includes(c.id));
+            activeCountryId = newId;
+            activeIp = ipArray.length > 0 ? ipArray[0] : '';
+
+            quickAddPanel.style.display = 'none';
+            quickAddCode.value = '';
+            quickAddIp.value = '';
+
+            renderDropdown();
+            updateDetailsVisual(togglePower.checked);
         });
     }
 
