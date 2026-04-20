@@ -172,7 +172,10 @@ chrome.storage.local.get(['enabled', '_activeTimezone'], (result) => {
       </style>
       <div class="floating-wrapper" id="loc-spoof-widget" title="位置模拟器：当前正在模拟此节点">
         <div class="status-indicator">
-          <div class="status-dot"></div>
+          <span style="font-size: 20px; position: relative; line-height: 1; display: inline-block;">
+            🌍
+            <div class="status-dot" style="position: absolute; bottom: -2px; right: -4px;"></div>
+          </span>
         </div>
         <div class="content-area">
           <span class="node-code">${country.code}</span>
