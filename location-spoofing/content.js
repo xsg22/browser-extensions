@@ -55,8 +55,12 @@ chrome.storage.local.get(['enabled', '_activeTimezone'], (result) => {
 });
 
 // Floating widget
+// Floating widget
 (function initFloatingWidget() {
   let widgetContainer = null;
+  let isDragging = false;
+  let startY, startTop;
+  let currentTop = null;
 
   function updateWidget(enabled, activeCountryId, allCountries) {
     if (!enabled || !activeCountryId) {
@@ -70,61 +74,89 @@ chrome.storage.local.get(['enabled', '_activeTimezone'], (result) => {
     const country = (allCountries || []).find(c => c.id === activeCountryId || c.code === activeCountryId);
     if (!country) return;
 
-    if (!widgetContainer) {
+    if (!widgetContainer || !document.body.contains(widgetContainer)) {
+      if (widgetContainer) widgetContainer.remove();
       widgetContainer = document.createElement('div');
       widgetContainer.id = 'loc-spoof-widget-root';
-      // Use shadow DOM to isolate styles
       try {
         widgetContainer.attachShadow({ mode: 'open' });
-      } catch (e) {
-        // Fallback if shadow DOM isn't supported or fails
-      }
+      } catch (e) { }
       document.body.appendChild(widgetContainer);
     }
 
     const root = widgetContainer.shadowRoot || widgetContainer;
+
+    // Remember previous Top if we had one
+    const savedTopStyle = currentTop !== null ? `top: ${currentTop}px; transform: none;` : 'top: 50%; transform: translateY(-50%);';
+
     root.innerHTML = `
       <style>
-        .floating-ball {
+        .floating-wrapper {
           position: fixed;
-          bottom: 24px;
-          right: 24px;
+          right: 0;
+          ${savedTopStyle}
           background: rgba(255, 255, 255, 0.85);
           backdrop-filter: blur(12px);
           border: 1px solid rgba(0, 102, 255, 0.15);
-          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-          border-radius: 30px;
-          padding: 8px 14px;
+          border-right: none;
+          box-shadow: -4px 4px 16px rgba(0, 0, 0, 0.08);
+          border-radius: 24px 0 0 24px;
+          height: 48px;
           display: flex;
           align-items: center;
-          gap: 8px;
+          overflow: hidden;
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-          font-size: 13px;
           color: #1d1d1f;
           z-index: 2147483647;
-          transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+          width: 48px;
+          transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1), background 0.3s;
+          cursor: grab;
           user-select: none;
+          -webkit-user-select: none;
         }
-        .floating-ball:hover {
-          transform: translateY(-3px) scale(1.02);
-          box-shadow: 0 8px 24px rgba(0, 102, 255, 0.15);
+        .floating-wrapper:hover, .floating-wrapper.dragging {
+          width: 140px;
           background: rgba(255, 255, 255, 0.95);
+          box-shadow: -4px 8px 24px rgba(0, 102, 255, 0.15);
+        }
+        .floating-wrapper:active {
+          cursor: grabbing;
+        }
+        .status-indicator {
+          width: 48px;
+          min-width: 48px;
+          height: 48px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
         .status-dot {
-          width: 8px;
-          height: 8px;
+          width: 10px;
+          height: 10px;
           background-color: #34c759;
           border-radius: 50%;
           box-shadow: 0 0 8px rgba(52, 199, 89, 0.6);
           position: relative;
+          animation: pulse 2s infinite;
         }
         @keyframes pulse {
           0% { box-shadow: 0 0 0 0 rgba(52, 199, 89, 0.4); }
-          70% { box-shadow: 0 0 0 6px rgba(52, 199, 89, 0); }
+          70% { box-shadow: 0 0 0 8px rgba(52, 199, 89, 0); }
           100% { box-shadow: 0 0 0 0 rgba(52, 199, 89, 0); }
         }
-        .status-dot {
-          animation: pulse 2s infinite;
+        .content-area {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding-right: 16px;
+          white-space: nowrap;
+          opacity: 0;
+          transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+          font-size: 13px;
+        }
+        .floating-wrapper:hover .content-area, .floating-wrapper.dragging .content-area {
+          opacity: 1;
+          transition-delay: 0.1s;
         }
         .node-code {
           font-weight: 700;
@@ -134,51 +166,81 @@ chrome.storage.local.get(['enabled', '_activeTimezone'], (result) => {
         .node-name {
           color: #86868b;
           font-weight: 500;
-        }
-        .close-btn {
-          margin-left: 4px;
-          cursor: pointer;
-          opacity: 0.4;
-          transition: opacity 0.2s;
-          display: flex;
-        }
-        .close-btn:hover {
-          opacity: 1;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
       </style>
-      <div class="floating-ball" title="位置模拟器：当前正在模拟此节点">
-        <div class="status-dot"></div>
-        <span class="node-code">${country.code}</span>
-        <span class="node-name">${country.name}</span>
+      <div class="floating-wrapper" id="loc-spoof-widget" title="位置模拟器：当前正在模拟此节点">
+        <div class="status-indicator">
+          <div class="status-dot"></div>
+        </div>
+        <div class="content-area">
+          <span class="node-code">${country.code}</span>
+          <span class="node-name">${country.name}</span>
+        </div>
       </div>
     `;
+
+    bindDragEvents(root.querySelector('#loc-spoof-widget'));
+  }
+
+  function bindDragEvents(el) {
+    if (!el) return;
+
+    const onMouseDown = (e) => {
+      isDragging = true;
+      startY = e.clientY;
+      const rect = el.getBoundingClientRect();
+      startTop = rect.top;
+
+      el.style.top = startTop + 'px';
+      el.style.transform = 'none';
+      el.classList.add('dragging');
+
+      e.preventDefault();
+    };
+
+    const onMouseMove = (e) => {
+      if (!isDragging) return;
+      const deltaY = e.clientY - startY;
+      let newTop = startTop + deltaY;
+
+      if (newTop < 0) newTop = 0;
+      if (newTop + el.offsetHeight > window.innerHeight) {
+        newTop = window.innerHeight - el.offsetHeight;
+      }
+
+      currentTop = newTop;
+      el.style.top = newTop + 'px';
+    };
+
+    const onMouseUp = () => {
+      if (isDragging) {
+        isDragging = false;
+        el.classList.remove('dragging');
+      }
+    };
+
+    el.addEventListener('mousedown', onMouseDown);
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
   }
 
   function renderOrWait() {
     chrome.storage.local.get(['enabled', 'activeCountry', 'allCountries'], (result) => {
-      const render = () => {
+      const tryRender = () => {
         if (document.body) {
           updateWidget(result.enabled, result.activeCountry, result.allCountries);
         } else {
-          // If no body yet, wait for DOMContentLoaded
-          document.addEventListener('DOMContentLoaded', () => {
-            updateWidget(result.enabled, result.activeCountry, result.allCountries);
-          });
+          requestAnimationFrame(tryRender);
         }
       };
-      // For cases where document.readyState is already interactive or complete
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', render);
-      } else {
-        render();
-      }
+      tryRender();
     });
   }
 
-  // Initial render
   renderOrWait();
 
-  // Listen for changes
   chrome.storage.onChanged.addListener((changes, namespace) => {
     if (namespace === 'local' && (changes.enabled || changes.activeCountry || changes.allCountries)) {
       chrome.storage.local.get(['enabled', 'activeCountry', 'allCountries'], (newResult) => {
@@ -188,4 +250,14 @@ chrome.storage.local.get(['enabled', '_activeTimezone'], (result) => {
       });
     }
   });
+
+  // Re-check periodically in case the SPA clears the body or the node gets removed
+  setInterval(() => {
+    if (widgetContainer && document.body && !document.body.contains(widgetContainer)) {
+      chrome.storage.local.get(['enabled', 'activeCountry', 'allCountries'], (result) => {
+        updateWidget(result.enabled, result.activeCountry, result.allCountries);
+      });
+    }
+  }, 2000);
+
 })();
